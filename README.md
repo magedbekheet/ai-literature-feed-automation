@@ -13,6 +13,7 @@ The system can run locally with Python, expose a FastAPI endpoint for automation
 The pipeline can search multiple scientific sources:
 
 - Crossref
+- OpenAlex
 - Semantic Scholar
 - arXiv
 
@@ -86,32 +87,32 @@ Crossref / Semantic Scholar / arXiv
 
 ```text
 .
-├── api.py
-├── run_feed.py
-├── requirements.txt
-├── Dockerfile
-├── docker-compose.yml
-├── docker-compose.api-only.yml
-├── .env.example
-├── .gitignore
-├── .dockerignore
-├── config/
-│   └── interests.yaml
-├── data/
-│   ├── bibtex/
-│   ├── digests/
-│   ├── feeds/
-│   ├── logs/
-│   └── ris/
-├── docs/
-│   └── screenshots/
-├── n8n/
-│   └── node_parameters.md
-└── scripts/
-    ├── config_loader.py
-    ├── fetch_sources.py
-    ├── rank_and_export.py
-    └── utils.py
+|-- api.py
+|-- run_feed.py
+|-- requirements.txt
+|-- Dockerfile
+|-- docker-compose.yml
+|-- docker-compose.api-only.yml
+|-- .env.example
+|-- .gitignore
+|-- .dockerignore
+|-- config/
+|   `-- interests.yaml
+|-- data/
+|   |-- bibtex/
+|   |-- digests/
+|   |-- feeds/
+|   |-- logs/
+|   `-- ris/
+|-- docs/
+|   `-- screenshots/
+|-- n8n/
+|   `-- node_parameters.md
+`-- scripts/
+    |-- config_loader.py
+    |-- fetch_sources.py
+    |-- rank_and_export.py
+    `-- utils.py
 ```
 
 ---
@@ -159,7 +160,25 @@ cp .env.example .env
 
 Edit `.env` if needed.
 
-The project can run without paid API keys, but some services may provide higher rate limits if an API key is added.
+The project can run without paid API keys. Semantic Scholar may provide higher rate limits if an API key is added, and OpenAlex can use an optional contact email (`OPENALEX_MAILTO`) for polite API usage.
+
+### Semantic Scholar API Notes
+
+Semantic Scholar can be used without a key, but anonymous requests share public rate limits and may return HTTP `429`. For more reliable scheduled feeds, request a free Semantic Scholar API key and set it in `.env`:
+
+```env
+SEMANTIC_SCHOLAR_API_KEY=your_semantic_scholar_api_key
+```
+
+The feed respects Semantic Scholar's introductory limit of about **1 request/second**. Keep `max_results_per_keyword` modest for scheduled runs. Recommended settings:
+
+```text
+10-15 records/keyword = normal scheduled feed
+20-25 records/keyword = broader check
+50+ records/keyword = avoid for frequent scheduled runs unless you know your rate plan allows it
+```
+
+OpenAlex and Crossref are the preferred primary discovery sources. Semantic Scholar is most useful for abstracts, citation counts, and extra coverage when the API is available.
 
 ### 5. Configure Research Interests
 
@@ -177,12 +196,12 @@ keywords:
   - "polymer derived ceramic battery"
   - "hard carbon sodium ion battery"
 
-negative_keywords:
+exclude_keywords:
   - "unrelated"
   - "medical"
   - "clinical"
 
-max_results_per_source: 20
+max_results_per_keyword: 20
 min_relevance_score: 0
 ```
 
@@ -196,10 +215,10 @@ Generated outputs will be saved under:
 
 ```text
 data/
-├── bibtex/
-├── digests/
-├── feeds/
-└── ris/
+|-- bibtex/
+|-- digests/
+|-- feeds/
+`-- ris/
 ```
 
 ---
@@ -304,13 +323,13 @@ Typical workflow:
 
 ```text
 Schedule Trigger
-    ↓
+    ->
 HTTP Request to /run_feed
-    ↓
+    ->
 Select generated outputs
-    ↓
+    ->
 Read BibTeX / RIS / Markdown digest files
-    ↓
+    ->
 Send email digest
 ```
 

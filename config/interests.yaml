@@ -30,6 +30,8 @@ research_description: >
 
 sources:
   crossref: true
+  openalex: true
+
   arxiv: true
   semantic_scholar: true
 

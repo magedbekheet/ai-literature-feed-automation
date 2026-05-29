@@ -10,7 +10,7 @@ DEFAULT_CONFIG: Dict[str, Any] = {
     "profile_name": "Research Radar",
     "keywords": [],
     "exclude_keywords": [],
-    "sources": {"crossref": True, "arxiv": True, "semantic_scholar": True},
+    "sources": {"crossref": True, "openalex": True, "arxiv": True, "semantic_scholar": True},
     "max_results_per_keyword": 10,
     "lookback_days": 30,
     "min_relevance_score": 35,
